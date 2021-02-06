@@ -19,26 +19,6 @@ class Color:
     YELLOW = (255,255,0) 
     SLATE_GREY = (112,128,144)
     TRANSPARENT = (0, 0, 0, 0)
-    
-class Block:
-    
-    def __init__(self,position,color):
-        #(left,top)
-        self.position = position
-        self.color = color  
-        
-    def draw(self,color=None):
-        if not color:color = self.color
-        pygame.draw.rect(screen,color,(self.position[0],self.position[1],self.size[0],self.size[1]))
-    
-    '''
-    def is_collide_point(self,pos):
-        if(pos[1]>=self.position[1] and pos[1]<=self.position[1]+self.size[1] \
-           and pos[0]>=self.position[0] and pos[0]<=self.position[0]+self.size[0]):
-            return True
-        else:
-            return False
-     '''
        
 class Nest:
     rect = None
@@ -83,8 +63,7 @@ class Food():
         Food.add_food(self)
      
     
-class Ant(Block):
-    size = (0,0)
+class Ant():
     all_ant = []
     
     @staticmethod
@@ -113,49 +92,115 @@ class Ant(Block):
         self.direction = direction
         self.image = self.images[direction]
         self.rect = self.image.get_rect(topleft=position)
+        self.step = 0
         Ant.add_ant(self)
 
     def get_new_pos(self):
+        if(self.direction == "up"):
+            new_left = self.position[0]
+            new_top = self.position[1] -Ant.size[1]
         
-        '''
-        if(self.position[0]<Nest.the_nest.position[0]):
-            new_left = self.left-self.width
-        else:
-            new_left = self.left+self.width
+        elif(self.direction == "upper_right"):
+            new_left = self.position[0]+ Ant.size[0]
+            new_top = self.position[1] -Ant.size[1] 
+           
+        elif(self.direction == "right"):
+            new_left = self.position[0]+ Ant.size[0]
+            new_top = self.position[1]
         
-        if(self.position[1]<Nest.the_nest.position[1]):
-            new_top = self.top-self.height
-        else:
-            new_top = self.left+self.width
-        '''
-        options = [0,1,-1]
-        new_left = options[random.randint(0,2)]*self.size[0]+self.position[0]
-        new_top = options[random.randint(0,2)]*self.size[1]+self.position[1]
+        elif(self.direction == "lower_right"):
+            new_left = self.position[0]+Ant.size[0]
+            new_top = self.position[1] +Ant.size[1]
+            
+        elif(self.direction == "down"):
+            new_left = self.position[0]
+            new_top = self.position[1] + Ant.size[1]
+    
+        elif(self.direction == "lower_left"):
+            new_left = self.position[0] - Ant.size[0]
+            new_top = self.position[1] + Ant.size[1]   
+            
+        elif(self.direction == "left"):
+            new_left = self.position[0] - Ant.size[0]
+            new_top = self.position[1] 
+            
+        elif(self.direction == "upper_left"):
+            new_left = self.position[0]-Ant.size[0]
+            new_top = self.position[1] -Ant.size[1]
         
         return new_left,new_top
     
-    '''
-    def move(self,pos):
-        self.draw(DEFAULT_BG_COLOR)
+    def change_direction(self):
+        if(self.direction == "up"):
+            self.direction = "upper_left" if random.random()>0.5 else "upper_right"
+            self.image = self.images[self.direction]
+            
+        elif(self.direction == "upper_right"):
+            self.direction = "up" if random.random()>0.5 else "right"
+            self.image = self.images[self.direction]    
+         
+        elif(self.direction == "right"):
+            self.direction = "upper_right" if random.random()>0.5 else "lower_right"
+            self.image = self.images[self.direction] 
+            
+        elif(self.direction == "lower_right"):
+            self.direction = "right" if random.random()>0.5 else "down"
+            self.image = self.images[self.direction]     
+            
+        elif(self.direction == "down"):
+            self.direction = "lower_right" if random.random()>0.5 else "lower_left"
+            self.image = self.images[self.direction]  
+            
+        elif(self.direction == "lower_left"):
+            self.direction = "down" if random.random()>0.5 else "left"
+            self.image = self.images[self.direction] 
+         
+        elif(self.direction == "left"):
+            self.direction = "lower_left" if random.random()>0.5 else "upper_left"
+            self.image = self.images[self.direction] 
+            
+        elif(self.direction == "upper_left"):
+            self.direction = "left" if random.random()>0.5 else "up"
+            self.image = self.images[self.direction] 
+            
+    def move(self,pos):        
         self.position = pos
-        self.draw()
-    '''   
+        self.rect = self.image.get_rect(topleft=self.position)
+        self.step += 1
+     
+    
         
 class Map:
     screen = None
+    right = 0
+    bottom = 0
+    
     @staticmethod
     def set_screen(screen):
         Map.screen = screen
-        
+    @staticmethod    
     def draw_image(image,rect):
         Map.screen.blit(image, rect)       
-    
+    @staticmethod
     def draw_line(color,size,pos):
         pygame.draw.line(Map.screen,color,size,pos)
         pygame.display.flip()
-    
+    @staticmethod
     def draw_rect(color,rect):
          pygame.draw.rect(Map.screen,color,rect)
+    
+    @staticmethod
+    def set_border(right,bottom):
+        Map.right = right
+        Map.bottom = bottom
+        
+    @staticmethod
+    def is_outside_border(point):
+        if(point[0]<0 or point[0]> Map.right or
+           point[1]<0 or point[1]> Map.bottom):
+            return True
+        else:
+            return False
         
 class Button():
     def __init__(self,position,size,image,callback):
@@ -188,6 +233,7 @@ SCREEN_HEIGHT = 800
 
 MAP_WIDTH = 800
 MAP_HEIGHT = 600
+Map.set_border(MAP_WIDTH,MAP_HEIGHT)
 IS_START = False
 current_time = 0
 DEFAULT_BG_COLOR = Color.WHITE
@@ -240,9 +286,15 @@ def random_generate_map():
     possible_positions.extend([(w,bottom) for w in range(left,right,ANT_WIDTH)])
     possible_positions.extend([(left,h) for h in range(top,bottom,ANT_HEIGHT)])
     possible_positions.extend([(right,h) for h in range(top,bottom,ANT_HEIGHT)])
-    possible_positions = list(set(possible_positions))
     
-    ants_positions = random.sample(possible_positions,ANTS_COUNT)
+    possible_positions =  [
+        pos for pos 
+        in set(possible_positions)
+        if (Map.is_outside_border(pos)+Map.is_outside_border((pos[0],pos[1]+Ant.size[1]))==0)
+    ]
+    
+    sample_count = min(len(possible_positions),ANTS_COUNT)
+    ants_positions = random.sample(possible_positions,sample_count)
    
     for pos in ants_positions:  
         ant = Ant(pos,"up")
@@ -277,44 +329,12 @@ def is_collide_point(pos):
 def main():  
     global SCREEN,IS_START,current_time 
     
-    possible_positions = random.sample(maps,6)
-
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     screen.fill(DEFAULT_BG_COLOR)
     Map.set_screen(screen)
+    
     random_generate_map()
-    
-    '''
-
-    #nest
-    Nest.set_position(possible_positions.pop())
-    Map.draw_image(Nest.image,Nest.rect)
-    
-     #food
-    for pos in possible_positions:
-        food = Food(pos)
-        Map.draw_image(Food.image,food.rect)
-    
-    #ant
-    left = Nest.position[0]-ANT_HEIGHT
-    top = Nest.position[1]-ANT_WIDTH
-    right = Nest.position[0]+NEST_WIDTH
-    bottom = Nest.position[1]+NEST_HEIGHT
-    
-    possible_positions = [(w,top) for w in range(left,right,ANT_WIDTH)]
-    possible_positions.extend([(w,bottom) for w in range(left,right,ANT_WIDTH)])
-    possible_positions.extend([(left,h) for h in range(top,bottom,ANT_HEIGHT)])
-    possible_positions.extend([(right,h) for h in range(top,bottom,ANT_HEIGHT)])
-    possible_positions = list(set(possible_positions))
-    
-    ants_positions = random.sample(possible_positions,ANTS_COUNT)
-   
-    for pos in ants_positions:  
-        ant = Ant(pos,"up")
-        Map.draw_image(ant.image,ant.rect)
-        
-   '''
     
     #draw line
     Map.draw_line(Color.SLATE_GREY, (0,MAP_HEIGHT), (SCREEN_WIDTH, MAP_HEIGHT))
@@ -343,16 +363,22 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN: 
                 random_map.on_click(event)
                 start_btn.on_click(event) 
-        print(end-current_time)
-        if (IS_START and (end-current_time>1)):
+       
+        if (IS_START and (end-current_time>0.5)):
             for ant in Ant.all_ant:
+                if(ant.step%5==0):
+                    ant.change_direction()
                 pos = ant.get_new_pos()
                 while(Food.collided_with_Food(pos) or 
-                      Nest.the_nest.is_collide_point(pos) or
-                      is_collide_point(pos)):
+                      Nest.rect.collidepoint(pos) or
+                      Map.is_outside_border(pos)):
+                    ant.change_direction()
                     pos = ant.get_new_pos()
-                    
+                
+                Map.draw_rect(DEFAULT_BG_COLOR,ant.rect) 
                 ant.move(pos)
+                Map.draw_image(ant.image,ant.rect)
+                
             current_time = end
         pygame.display.update()
         
