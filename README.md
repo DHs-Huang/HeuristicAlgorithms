@@ -9,6 +9,12 @@
 ## Genetic algorithm
 [以Python實作基因演算法(Genetic Algorithm , GA)](https://vbjc5275.medium.com/%E4%BB%A5python%E5%AF%A6%E4%BD%9C%E5%9F%BA%E5%9B%A0%E6%BC%94%E7%AE%97%E6%B3%95-genetic-algorithm-ga-%E4%B8%A6%E8%A7%A3%E6%B1%BA%E5%B7%A5%E4%BD%9C%E6%8C%87%E6%B4%BE%E5%95%8F%E9%A1%8C-job-assignment-problem-jap-b0d7c4ad6d0f)
 
+## Tabu Search
+
+[以Python實作禁忌搜索法(Tabu Search, TS)](https://vbjc5275.medium.com/%E4%BB%A5python%E5%AF%A6%E4%BD%9C%E7%A6%81%E5%BF%8C%E6%90%9C%E7%B4%A2%E6%B3%95-tabu-search-ts-4d36f6571bcb)
+
+
+
 
 
 
