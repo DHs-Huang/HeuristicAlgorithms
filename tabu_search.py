@@ -119,18 +119,19 @@ class TabuSearch:
             #udpate move
             self.swap_move(self.current_sol, neighbor_best_move)
             
-            if move not in self.tabu_list:
-                self.tabu_list.insert(0,neighbor_best_move)
-            elif(move in self.tabu_list[1:]):
+            #remove if it is in tabu list
+            if move in self.tabu_list:
                 self.tabu_list.remove(move)
-                self.tabu_list.insert(0,neighbor_best_move)
+            #insert to head    
+            self.tabu_list.insert(0,neighbor_best_move)
+            
                 
         else :
              #udpate move
              self.swap_move(self.current_sol, non_tabu_neighbor_best_move)
              self.tabu_list.append(non_tabu_neighbor_best_move)
         
-        # save 
+        # save best value
         self.best_value_in_iteration.append(neighbor_best_val)
         self.best_value_in_history.append(self.the_best_val)
         
@@ -168,4 +169,3 @@ plt.xlabel("Iteration",fontsize=16)
 plt.ylabel("Value",fontsize=16)
 plt.title("Iteration vs Objective Value")
 plt.show()
-    
