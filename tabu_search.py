@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from itertools import combinations
 from collections import namedtuple
+import matplotlib.pyplot as plt
 import sys
 #%%
 class TSPProblem:
@@ -30,50 +31,53 @@ class TSPProblem:
     
     def to_cities_name(self,cities_id):
         return [self.cities_name[i] for i in cities_id]
-#%%
  #%%
 Move = namedtuple('Tabu', ['i1', 'v1','i2','v2'])
 
 class TabuSearch:
     def  __init__(self,
                   var_num,
-                  fitness_func,
+                  target_fun,
                   tabu_size,
                   iteration_num = 50,
-                  after_generation = None,
-                  save_best_sols=False):
+                  after_iteration = None
+                  ):
         
         self.var_num = var_num
         self.iteration_num = iteration_num
-        self.tabu_list = [] #[(i1,v1,i2)]
         self.tabu_size = tabu_size
-        self.fitness_func  =  fitness_func
-        self.after_generation = after_generation
+        self.target_fun = target_fun
+        self.after_iteration = after_iteration
+            
         self.reset()
-        
-        
+          
     def reset(self):
+        self.iteration = 0
+        self.tabu_list = [] 
+         
+        #all combination of swapped index
         self.candidate_swapped_index = list(combinations(list(range(self.var_num)), 2))
         self.candiate_count = len(self.candidate_swapped_index)
         
-        self.iteration = 0
+        #initialize solution 
         self.current_sol = [i for i in range(self.var_num)]
         self.the_best_sol = self.current_sol[:]
-        self.the_best_val = self.fitness_func(self.current_sol)
- 
+        self.the_best_val = self.target_fun(self.current_sol)
+        
+        #record best value for plot
+        self.best_value_in_iteration = [] 
+        self.best_value_in_history = [] 
+    
     def swap_move(self,sol,move):
+        #swap index
         sol[move.i1],sol[move.i2] = sol[move.i2],sol[move.i1]
         return
     
     def run(self):
         for iteration in range(self.iteration_num):
             self.run_one_iteration()
-            if(self.after_generation):
-                self.after_generation(self)
 
     def run_one_iteration(self):
-        self.iteration += 1
-
         neighbor_best_val = sys.maxsize
         neighbor_best_sol = None
         neighbor_best_move = None
@@ -82,18 +86,18 @@ class TabuSearch:
         non_tabu_neighbor_best_move = None
         
         for swapped_index in self.candidate_swapped_index:
-            c1,c2 = swapped_index
-            move = Move(c1,self.current_sol[c1],c2,self.current_sol[c2])
+            i1,i2 = swapped_index
+            move = Move(i1,self.current_sol[i1],i2,self.current_sol[i2])
             
             neighbor_sol =  self.current_sol[:]
             self.swap_move(neighbor_sol, move)
-            neighbor_value = self.fitness_func(neighbor_sol)
+            neighbor_value = self.target_fun(neighbor_sol)
             
             #check if it is in tabu
             violated = False
             for tabu_move in self.tabu_list:
-                if (tabu_move.i1 == c1 and tabu_move.v1 == neighbor_sol[c1] and \
-                    tabu_move.i2 == c2 and tabu_move.v2 == neighbor_sol[c2]):
+                if (tabu_move.i1 == i1 and tabu_move.v1 == neighbor_sol[i1] and \
+                    tabu_move.i2 == i2 and tabu_move.v2 == neighbor_sol[i2]):
                     violated = True
                     break   
             
@@ -126,8 +130,17 @@ class TabuSearch:
              self.swap_move(self.current_sol, non_tabu_neighbor_best_move)
              self.tabu_list.append(non_tabu_neighbor_best_move)
         
+        # save 
+        self.best_value_in_iteration.append(neighbor_best_val)
+        self.best_value_in_history.append(self.the_best_val)
+        
         if len(self.tabu_list) > self.tabu_size:
-            self.tabu_list = self.tabu_list[:-1]  
+            self.tabu_list.pop()
+        
+        if self.after_iteration:
+            self.after_iteration(self)
+        
+        self.iteration += 1
 #%%
 data = pd.read_csv("data/Latitude and Longitude of Taiwan County.csv")
 coordinate = data.iloc[:,1:].values   
@@ -136,19 +149,23 @@ problem = TSPProblem(coordinate,data["縣市"].values)
 def output_message(tabu_search):
     print(f"=====Itieration {tabu_search.iteration}=====")
     print(f"Best Solution = {tabu_search.the_best_sol}")
-    print(f"Best Fitness = {tabu_search.the_best_val}")
-
+    print(f"Best Value    = {tabu_search.the_best_val}")
 
 tabu = TabuSearch(var_num=problem.city_count,
-                  fitness_func=problem.compute_objective_value,
+                  target_fun=problem.compute_objective_value,
                   tabu_size=5,
-                  iteration_num = 5,
-                  after_generation=output_message)
+                  iteration_num = 20,
+                  after_iteration=output_message)
+
 tabu.run()
 
-
-tabu.tabu_list
-#%%  
-#https://blog.csdn.net/zuochao_2013/article/details/72292466
-#https://blog.csdn.net/qq_38048756/article/details/109394815
-#file:///E:/Download/A%20Tabu-search%20Based%20Bayesian%20Network%20Structure%20Learning%20Algorithm.pdf
+#%% plot
+plt.figure(figsize=(8,6))     
+plt.plot(tabu.best_value_in_iteration,marker="o",color = "y")
+plt.plot(tabu.best_value_in_history,marker="o",color = "r")
+plt.legend(["Best In Iteration","Best In History"],loc="upper right")
+plt.xlabel("Iteration",fontsize=16)
+plt.ylabel("Value",fontsize=16)
+plt.title("Iteration vs Objective Value")
+plt.show()
+    
